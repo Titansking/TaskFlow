@@ -36,7 +36,14 @@ export function Header({
   onToggleDarkMode,
   teamMembers,
 }: HeaderProps) {
-  const currentUser = teamMembers[0]
+  const currentUser = teamMembers[0] || {
+    id: "guest",
+    name: "Guest User",
+    email: "guest@example.com",
+    role: "Team Member",
+    avatar: "G",
+    status: "offline"
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

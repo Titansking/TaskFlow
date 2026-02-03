@@ -22,12 +22,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Import Routes
-// import authRoutes from './routes/auth';
-// import taskRoutes from './routes/task';
+import userRoutes from './routes/userRoutes';
+import projectRoutes from './routes/projectRoutes';
+import taskRoutes from './routes/taskRoutes';
+import activityRoutes from './routes/activityRoutes';
 
 // API Routes
-// app.use('/api/auth', authRoutes);
-// app.use('/api/tasks', taskRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/tasks', taskRoutes);
+app.use('/api/activities', activityRoutes);
 
 // Health Check Route
 app.get('/api/health', (_req: Request, res: Response) => {

@@ -11,7 +11,9 @@ import { SettingsModal } from "@/components/settings-modal"
 import { CalendarView } from "@/components/calendar-view"
 import { AnalyticsView } from "@/components/analytics-view"
 import { TimelineView } from "@/components/timeline-view"
+import { useEffect } from "react"
 import type { Task, Project, TeamMember, Activity } from "@/lib/types"
+import { taskService, projectService, userService, activityService } from "@/services/data"
 
 const initialProjects: Project[] = [
   { id: "1", name: "Website Redesign", color: "#3b82f6", members: ["1", "2", "3"] },
@@ -47,10 +49,12 @@ const initialActivities: Activity[] = [
 ]
 
 export default function TaskFlowApp() {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks)
-  const [projects] = useState<Project[]>(initialProjects)
-  const [teamMembers] = useState<TeamMember[]>(initialTeamMembers)
-  const [activities] = useState<Activity[]>(initialActivities)
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [projects, setProjects] = useState<Project[]>([])
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
+  const [activities, setActivities] = useState<Activity[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  
   const [selectedProject, setSelectedProject] = useState<string | null>(null)
   const [currentView, setCurrentView] = useState<"dashboard" | "kanban" | "calendar" | "analytics" | "timeline">("dashboard")
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
@@ -61,6 +65,31 @@ export default function TaskFlowApp() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const [tasksData, projectsData, usersData, activitiesData] = await Promise.all([
+          taskService.getTasks(),
+          projectService.getProjects(),
+          userService.getUsers(),
+          activityService.getActivities()
+        ]);
+        
+        setTasks(tasksData);
+        setProjects(projectsData);
+        setTeamMembers(usersData);
+        setActivities(activitiesData);
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
+
   const filteredTasks = tasks.filter((task) => {
     const matchesProject = !selectedProject || task.projectId === selectedProject
     const matchesSearch = !searchQuery || 
@@ -70,30 +99,47 @@ export default function TaskFlowApp() {
     return matchesProject && matchesSearch
   })
 
-  const handleCreateTask = (newTask: Omit<Task, "id" | "createdAt">) => {
-    const task: Task = {
-      ...newTask,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString().split("T")[0],
+  const handleSaveTask = async (taskData: Task | Omit<Task, "id" | "createdAt">) => {
+    try {
+      if ('id' in taskData) {
+        // Update existing task
+        const updatedTask = await taskService.updateTask(taskData.id, taskData as Task);
+        setTasks(tasks.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
+        setEditingTask(null);
+      } else {
+        // Create new task
+        const createdTask = await taskService.createTask(taskData);
+        setTasks([createdTask, ...tasks]);
+      }
+      setIsTaskModalOpen(false);
+    } catch (error) {
+      console.error("Failed to save task:", error);
     }
-    setTasks([...tasks, task])
-    setIsTaskModalOpen(false)
   }
 
-  const handleUpdateTask = (updatedTask: Task) => {
-    setTasks(tasks.map((t) => (t.id === updatedTask.id ? updatedTask : t)))
-    setEditingTask(null)
-    setIsTaskModalOpen(false)
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      await taskService.deleteTask(taskId);
+      setTasks(tasks.filter((t) => t.id !== taskId));
+      setEditingTask(null);
+      setIsTaskModalOpen(false);
+    } catch (error) {
+      console.error("Failed to delete task:", error);
+    }
   }
 
-  const handleDeleteTask = (taskId: string) => {
-    setTasks(tasks.filter((t) => t.id !== taskId))
-    setEditingTask(null)
-    setIsTaskModalOpen(false)
-  }
-
-  const handleDragTask = (taskId: string, newStatus: Task["status"]) => {
-    setTasks(tasks.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)))
+  const handleDragTask = async (taskId: string, newStatus: Task["status"]) => {
+    // Optimistic update
+    const previousTasks = [...tasks];
+    setTasks(tasks.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)));
+    
+    try {
+      await taskService.updateTask(taskId, { status: newStatus });
+    } catch (error) {
+      console.error("Failed to update task status:", error);
+      // Revert on error
+      setTasks(previousTasks);
+    }
   }
 
   const handleEditTask = (task: Task) => {
@@ -199,7 +245,7 @@ export default function TaskFlowApp() {
           setIsTaskModalOpen(false)
           setEditingTask(null)
         }}
-        onSave={editingTask ? handleUpdateTask : handleCreateTask}
+        onSave={handleSaveTask}
         onDelete={editingTask ? () => handleDeleteTask(editingTask.id) : undefined}
         task={editingTask}
         projects={projects}
