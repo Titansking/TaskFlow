@@ -26,8 +26,10 @@ import userRoutes from './routes/userRoutes';
 import projectRoutes from './routes/projectRoutes';
 import taskRoutes from './routes/taskRoutes';
 import activityRoutes from './routes/activityRoutes';
+import authRoutes from './routes/authRoutes';
 
 // API Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/tasks', taskRoutes);

@@ -11,6 +11,7 @@ import { SettingsModal } from "@/components/settings-modal"
 import { CalendarView } from "@/components/calendar-view"
 import { AnalyticsView } from "@/components/analytics-view"
 import { TimelineView } from "@/components/timeline-view"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { useEffect } from "react"
 import type { Task, Project, TeamMember, Activity } from "@/lib/types"
 import { taskService, projectService, userService, activityService } from "@/services/data"
@@ -152,6 +153,8 @@ export default function TaskFlowApp() {
     document.documentElement.classList.toggle("dark")
   }
 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
   return (
     <div className={`min-h-screen bg-background ${isDarkMode ? "dark" : ""}`}>
       <Header
@@ -166,10 +169,13 @@ export default function TaskFlowApp() {
         isDarkMode={isDarkMode}
         onToggleDarkMode={toggleDarkMode}
         teamMembers={teamMembers}
+        onMenuToggle={() => setIsMobileMenuOpen(true)}
       />
       
       <div className="flex">
+        {/* Desktop Sidebar */}
         <Sidebar
+          className="hidden md:block fixed left-0 top-16 z-40 h-[calc(100vh-4rem)]"
           projects={projects}
           selectedProject={selectedProject}
           onSelectProject={setSelectedProject}
@@ -183,8 +189,35 @@ export default function TaskFlowApp() {
             done: tasks.filter((t) => t.status === "done").length,
           }}
         />
+
+        {/* Mobile Sidebar */}
+        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+          <SheetContent side="left" className="p-0 w-[300px]">
+            <Sidebar
+              className="w-full h-full border-none"
+              projects={projects}
+              selectedProject={selectedProject}
+              onSelectProject={(id) => {
+                setSelectedProject(id)
+                setIsMobileMenuOpen(false)
+              }}
+              currentView={currentView}
+              onChangeView={(view) => {
+                setCurrentView(view)
+                setIsMobileMenuOpen(false)
+              }}
+              collapsed={false}
+              onToggleCollapse={() => {}}
+              taskCounts={{
+                todo: tasks.filter((t) => t.status === "todo").length,
+                inProgress: tasks.filter((t) => t.status === "in-progress").length,
+                done: tasks.filter((t) => t.status === "done").length,
+              }}
+            />
+          </SheetContent>
+        </Sheet>
         
-        <main className={`flex-1 p-6 transition-all ${sidebarCollapsed ? "ml-16" : "ml-64"}`}>
+        <main className={`flex-1 p-4 md:p-6 transition-all ${sidebarCollapsed ? "md:ml-16" : "md:ml-64"}`}>
           {currentView === "dashboard" && (
             <Dashboard
               tasks={filteredTasks}

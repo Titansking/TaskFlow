@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, Moon, Plus, Search, Settings, Sun, Users } from "lucide-react"
+import { Bell, Moon, Plus, Search, Settings, Sun, Users, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -24,6 +24,7 @@ interface HeaderProps {
   isDarkMode: boolean
   onToggleDarkMode: () => void
   teamMembers: TeamMember[]
+  onMenuToggle: () => void
 }
 
 export function Header({
@@ -35,6 +36,7 @@ export function Header({
   isDarkMode,
   onToggleDarkMode,
   teamMembers,
+  onMenuToggle,
 }: HeaderProps) {
   const currentUser = teamMembers[0] || {
     id: "guest",
@@ -47,8 +49,11 @@ export function Header({
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-16 items-center justify-between px-6">
+      <div className="flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuToggle}>
+            <Menu className="h-5 w-5" />
+          </Button>
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
               T
@@ -57,11 +62,11 @@ export function Header({
           </div>
         </div>
 
-        <div className="flex flex-1 items-center justify-center px-8">
-          <div className="relative w-full max-w-md">
+        <div className="flex flex-1 items-center justify-center px-4 md:px-8">
+          <div className="relative w-full max-w-md hidden md:block">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search tasks, projects, or team members..."
+              placeholder="Search tasks..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               className="pl-10"
@@ -72,10 +77,10 @@ export function Header({
         <div className="flex items-center gap-2">
           <Button onClick={onNewTask} size="sm" className="gap-2">
             <Plus className="h-4 w-4" />
-            New Task
+            <span className="hidden md:inline">New Task</span>
           </Button>
 
-          <Button variant="ghost" size="icon" onClick={onOpenTeam}>
+          <Button variant="ghost" size="icon" onClick={onOpenTeam} className="hidden md:inline-flex">
             <Users className="h-5 w-5" />
             <span className="sr-only">Team</span>
           </Button>
@@ -123,7 +128,7 @@ export function Header({
             <span className="sr-only">Toggle theme</span>
           </Button>
 
-          <Button variant="ghost" size="icon" onClick={onOpenSettings}>
+          <Button variant="ghost" size="icon" onClick={onOpenSettings} className="hidden md:inline-flex">
             <Settings className="h-5 w-5" />
             <span className="sr-only">Settings</span>
           </Button>
@@ -148,11 +153,15 @@ export function Header({
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Profile</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => window.location.href = "/profile"}>Profile</DropdownMenuItem>
               <DropdownMenuItem>Billing</DropdownMenuItem>
               <DropdownMenuItem>Team</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">Log out</DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onClick={() => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/login';
+              }}>Log out</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

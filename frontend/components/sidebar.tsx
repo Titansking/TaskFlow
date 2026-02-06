@@ -38,7 +38,8 @@ export function Sidebar({
   collapsed,
   onToggleCollapse,
   taskCounts,
-}: SidebarProps) {
+  className,
+}: SidebarProps & { className?: string }) {
   const navItems = [
     { id: "dashboard" as const, label: "Dashboard", icon: Home },
     { id: "kanban" as const, label: "Kanban Board", icon: Layers },
@@ -50,8 +51,9 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] border-r bg-background transition-all duration-300",
-        collapsed ? "w-16" : "w-64"
+        "border-r bg-background transition-all duration-300",
+        collapsed ? "w-16" : "w-64",
+        className
       )}
     >
       <div className="flex h-full flex-col">
