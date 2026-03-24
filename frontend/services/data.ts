@@ -30,6 +30,15 @@ export const projectService = {
   getProjects: async (): Promise<Project[]> => {
     const response = await api.get('/projects');
     return response.data.data.map(mapId);
+  },
+
+  createProject: async (project: Omit<Project, 'id'>): Promise<Project> => {
+    const response = await api.post('/projects', project);
+    return mapId(response.data.data);
+  },
+
+  deleteProject: async (id: string): Promise<void> => {
+    await api.delete(`/projects/${id}`);
   }
 };
 

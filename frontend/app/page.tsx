@@ -13,6 +13,7 @@ import { AnalyticsView } from "@/components/analytics-view"
 import { TimelineView } from "@/components/timeline-view"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { MessagePanel } from "@/components/message-panel"
+import { ProjectModal } from "@/components/project-modal"
 import type { Task, Project, TeamMember, Activity } from "@/lib/types"
 import { taskService, projectService, userService, activityService } from "@/services/data"
 import { authService } from "@/services/auth"
@@ -35,6 +36,7 @@ export default function TaskFlowApp() {
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false)
 
   const [currentUser, setCurrentUser] = useState<TeamMember | null>(null)
 
@@ -130,6 +132,26 @@ export default function TaskFlowApp() {
     document.documentElement.classList.toggle("dark")
   }
 
+  const handleCreateProject = async (projectData: Omit<Project, 'id'>) => {
+    try {
+      const newProject = await projectService.createProject(projectData)
+      setProjects([...projects, newProject])
+    } catch (error) {
+      console.error('Failed to create project:', error)
+    }
+  }
+  const handleDeleteProject = async (projectId: string) => {
+    try {
+      await projectService.deleteProject(projectId)
+      setProjects(projects.filter(p => p.id !== projectId))
+      if (selectedProject === projectId) {
+        setSelectedProject(null)
+      }
+    } catch (error) {
+      console.error('Failed to delete project:', error)
+    }
+  }
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   return (
@@ -163,6 +185,8 @@ export default function TaskFlowApp() {
           onChangeView={setCurrentView}
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onAddProject={() => setIsProjectModalOpen(true)}
+          onDeleteProject={handleDeleteProject}
           taskCounts={{
             todo: tasks.filter((t) => t.status === "todo").length,
             inProgress: tasks.filter((t) => t.status === "in-progress").length,
@@ -188,6 +212,11 @@ export default function TaskFlowApp() {
               }}
               collapsed={false}
               onToggleCollapse={() => {}}
+              onAddProject={() => {
+                setIsProjectModalOpen(true)
+                setIsMobileMenuOpen(false)
+              }}
+              onDeleteProject={handleDeleteProject}
               taskCounts={{
                 todo: tasks.filter((t) => t.status === "todo").length,
                 inProgress: tasks.filter((t) => t.status === "in-progress").length,
@@ -297,6 +326,12 @@ export default function TaskFlowApp() {
         projects={projects}
         teamMembers={teamMembers}
         currentUser={currentUser}
+      />
+
+      <ProjectModal
+        isOpen={isProjectModalOpen}
+        onClose={() => setIsProjectModalOpen(false)}
+        onSave={handleCreateProject}
       />
     </div>
   )
