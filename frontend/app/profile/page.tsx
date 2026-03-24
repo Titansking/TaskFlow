@@ -19,13 +19,24 @@ export default function ProfilePage() {
   const [error, setError] = useState("")
 
   useEffect(() => {
-    const currentUser = authService.getCurrentUser()
-    if (!currentUser) {
-      router.push("/login")
-      return
-    }
-    setUser(currentUser)
-    setName(currentUser.name)
+    const fetchProfile = async () => {
+      try {
+        const user = await authService.getProfile();
+        setUser(user);
+        setName(user.name);
+      } catch (error) {
+        // Fallback to local storage if API fails or verify token validity
+        const currentUser = authService.getCurrentUser();
+        if (currentUser) {
+          setUser(currentUser);
+          setName(currentUser.name);
+        } else {
+          router.push("/login");
+        }
+      }
+    };
+    
+    fetchProfile();
   }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {

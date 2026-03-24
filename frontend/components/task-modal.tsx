@@ -34,9 +34,10 @@ interface TaskModalProps {
   task: Task | null
   projects: Project[]
   teamMembers: TeamMember[]
+  defaultDueDate?: string
 }
 
-export function TaskModal({ isOpen, onClose, onSave, onDelete, task, projects, teamMembers }: TaskModalProps) {
+export function TaskModal({ isOpen, onClose, onSave, onDelete, task, projects, teamMembers, defaultDueDate }: TaskModalProps) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [status, setStatus] = useState<Task["status"]>("todo")
@@ -64,10 +65,10 @@ export function TaskModal({ isOpen, onClose, onSave, onDelete, task, projects, t
       setPriority("medium")
       setProjectId(projects[0]?.id || "")
       setAssigneeId(teamMembers[0]?.id || "")
-      setDueDate(new Date().toISOString().split("T")[0])
+      setDueDate(defaultDueDate || new Date().toISOString().split("T")[0])
       setTags([])
     }
-  }, [task, projects, teamMembers])
+  }, [task, projects, teamMembers, defaultDueDate])
 
   const handleAddTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {
@@ -128,6 +129,7 @@ export function TaskModal({ isOpen, onClose, onSave, onDelete, task, projects, t
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Enter task description"
+              required
               rows={3}
             />
           </div>

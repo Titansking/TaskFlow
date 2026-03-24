@@ -14,10 +14,18 @@ export const getTasks = async (_req: Request, res: Response) => {
 
 export const createTask = async (req: Request, res: Response) => {
   try {
+    console.log('Creating task with body:', JSON.stringify(req.body, null, 2));
     const task = await Task.create(req.body);
     return res.status(201).json(successResponse(task, 'Task created successfully', 201));
-  } catch (error) {
-    return res.status(500).json(errorResponse('Error creating task'));
+  } catch (error: any) {
+    console.error('Error creating task:', error.message);
+    if (error.name === 'ValidationError') {
+      return res.status(400).json(errorResponse(`Validation error: ${error.message}`, 400));
+    }
+    if (error.name === 'CastError') {
+      return res.status(400).json(errorResponse(`Invalid field value: ${error.message}`, 400));
+    }
+    return res.status(500).json(errorResponse(`Error creating task: ${error.message}`, 500));
   }
 };
 

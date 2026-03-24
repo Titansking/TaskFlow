@@ -37,6 +37,25 @@ export const userService = {
   getUsers: async (): Promise<TeamMember[]> => {
     const response = await api.get('/users');
     return response.data.data.map(mapId);
+  },
+
+  getUser: async (id: string): Promise<TeamMember> => {
+    const response = await api.get(`/users/${id}`);
+    return mapId(response.data.data);
+  },
+
+  createUser: async (user: Partial<TeamMember> & { password?: string }): Promise<TeamMember> => {
+    const response = await api.post('/users', user);
+    return mapId(response.data.data);
+  },
+
+  updateUser: async (id: string, data: Partial<TeamMember>): Promise<TeamMember> => {
+    const response = await api.put(`/users/${id}`, data);
+    return mapId(response.data.data);
+  },
+
+  deleteUser: async (id: string): Promise<void> => {
+    await api.delete(`/users/${id}`);
   }
 };
 

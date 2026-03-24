@@ -19,6 +19,9 @@ export interface IUser {
   email: string;
   password: string;
   name: string;
+  role: 'Admin' | 'Project Manager' | 'Team Member';
+  avatar: string;
+  status: 'online' | 'away' | 'offline';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,11 +30,13 @@ export interface IUser {
 export interface ITask {
   _id: string;
   title: string;
-  description?: string;
-  status: 'pending' | 'in-progress' | 'completed';
+  description: string;
+  status: 'todo' | 'in-progress' | 'done';
   priority: 'low' | 'medium' | 'high';
-  dueDate?: Date;
-  userId: string;
+  projectId: string;
+  assigneeId: string;
+  dueDate: Date;
+  tags: string[];
   createdAt: Date;
   updatedAt: Date;
 }

@@ -32,21 +32,20 @@ export const register = async (req: Request, res: Response) => {
     });
 
     // Generate token
+    // Generate token
     const token = generateToken(
       (user._id as unknown) as string,
       user.email
     );
-
-    const userAny = user as any;
 
     // Return user without password
     const userResponse = {
       _id: user._id,
       name: user.name,
       email: user.email,
-      role: userAny.role,
-      avatar: userAny.avatar,
-      status: userAny.status
+      role: user.role,
+      avatar: user.avatar,
+      status: user.status
     };
 
     return res.status(201).json(successResponse({ user: userResponse, token }, 'Registration successful', 201));
@@ -67,7 +66,7 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // Check password
-    const isMatch = await bcrypt.compare(password, (user as any).password);
+    const isMatch = await bcrypt.compare(password, user.password);
     
     if (!isMatch) {
       return res.status(401).json(unauthorizedResponse('Invalid credentials'));
@@ -79,16 +78,13 @@ export const login = async (req: Request, res: Response) => {
       user.email
     );
 
-    // Cast to any to access document properties
-    const userAny = user as any;
-
     const userResponse = {
       _id: user._id,
       name: user.name,
       email: user.email,
-      role: userAny.role || 'Team Member',
-      avatar: userAny.avatar,
-      status: userAny.status || 'online'
+      role: user.role || 'Team Member',
+      avatar: user.avatar,
+      status: user.status || 'online'
     };
 
     return res.status(200).json(successResponse({ user: userResponse, token }, 'Login successful'));

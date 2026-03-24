@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import type { Task, Project, TeamMember } from "@/lib/types"
+import type { Task, Project, TeamMember, Activity } from "@/lib/types"
 import {
   BarChart,
   Bar,
@@ -25,9 +25,10 @@ interface AnalyticsViewProps {
   tasks: Task[]
   projects: Project[]
   teamMembers: TeamMember[]
+  activities: Activity[]
 }
 
-export function AnalyticsView({ tasks, projects, teamMembers }: AnalyticsViewProps) {
+export function AnalyticsView({ tasks, projects, teamMembers, activities }: AnalyticsViewProps) {
   const todoTasks = tasks.filter((t) => t.status === "todo").length
   const inProgressTasks = tasks.filter((t) => t.status === "in-progress").length
   const doneTasks = tasks.filter((t) => t.status === "done").length
@@ -67,15 +68,37 @@ export function AnalyticsView({ tasks, projects, teamMembers }: AnalyticsViewPro
     }
   })
 
-  const weeklyData = [
-    { day: "Mon", completed: 4, created: 3 },
-    { day: "Tue", completed: 2, created: 5 },
-    { day: "Wed", completed: 6, created: 2 },
-    { day: "Thu", completed: 3, created: 4 },
-    { day: "Fri", completed: 5, created: 3 },
-    { day: "Sat", completed: 1, created: 0 },
-    { day: "Sun", completed: 0, created: 1 },
-  ]
+  // Calculate weekly data derived from activities
+  const getLast7Days = () => {
+    const days = []
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      days.push(d)
+    }
+    return days
+  }
+
+  const weeklyData = getLast7Days().map(day => {
+    const dayStr = day.toLocaleDateString()
+    const dayName = day.toLocaleDateString("en-US", { weekday: "short" })
+    
+    const created = activities.filter(a => 
+      a.type === "task_created" && 
+      new Date(a.timestamp).toLocaleDateString() === dayStr
+    ).length
+
+    const completed = activities.filter(a => 
+      a.type === "task_completed" && 
+      new Date(a.timestamp).toLocaleDateString() === dayStr
+    ).length
+
+    return {
+      day: dayName,
+      created,
+      completed
+    }
+  })
 
   const completionRate = tasks.length > 0 ? Math.round((doneTasks / tasks.length) * 100) : 0
   const overdueCount = tasks.filter((t) => new Date(t.dueDate) < new Date() && t.status !== "done").length

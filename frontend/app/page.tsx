@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Header } from "@/components/header"
 import { Sidebar } from "@/components/sidebar"
 import { Dashboard } from "@/components/dashboard"
@@ -12,42 +12,10 @@ import { CalendarView } from "@/components/calendar-view"
 import { AnalyticsView } from "@/components/analytics-view"
 import { TimelineView } from "@/components/timeline-view"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
-import { useEffect } from "react"
+import { MessagePanel } from "@/components/message-panel"
 import type { Task, Project, TeamMember, Activity } from "@/lib/types"
 import { taskService, projectService, userService, activityService } from "@/services/data"
-
-const initialProjects: Project[] = [
-  { id: "1", name: "Website Redesign", color: "#3b82f6", members: ["1", "2", "3"] },
-  { id: "2", name: "Mobile App", color: "#10b981", members: ["1", "4"] },
-  { id: "3", name: "Marketing Campaign", color: "#f59e0b", members: ["2", "3", "5"] },
-]
-
-const initialTeamMembers: TeamMember[] = [
-  { id: "1", name: "Alex Johnson", email: "alex@taskflow.com", role: "Admin", avatar: "AJ", status: "online" },
-  { id: "2", name: "Sarah Chen", email: "sarah@taskflow.com", role: "Project Manager", avatar: "SC", status: "online" },
-  { id: "3", name: "Mike Williams", email: "mike@taskflow.com", role: "Team Member", avatar: "MW", status: "away" },
-  { id: "4", name: "Emma Davis", email: "emma@taskflow.com", role: "Team Member", avatar: "ED", status: "offline" },
-  { id: "5", name: "James Brown", email: "james@taskflow.com", role: "Team Member", avatar: "JB", status: "online" },
-]
-
-const initialTasks: Task[] = [
-  { id: "1", title: "Design homepage mockup", description: "Create high-fidelity mockups for the new homepage", status: "done", priority: "high", projectId: "1", assigneeId: "2", dueDate: "2026-01-15", tags: ["design", "urgent"], createdAt: "2026-01-10" },
-  { id: "2", title: "Implement authentication", description: "Set up JWT authentication with refresh tokens", status: "in-progress", priority: "high", projectId: "2", assigneeId: "1", dueDate: "2026-01-22", tags: ["backend", "security"], createdAt: "2026-01-12" },
-  { id: "3", title: "Write API documentation", description: "Document all REST API endpoints", status: "todo", priority: "medium", projectId: "2", assigneeId: "4", dueDate: "2026-01-25", tags: ["documentation"], createdAt: "2026-01-14" },
-  { id: "4", title: "Social media graphics", description: "Create graphics for Q1 campaign", status: "in-progress", priority: "medium", projectId: "3", assigneeId: "3", dueDate: "2026-01-20", tags: ["design", "marketing"], createdAt: "2026-01-11" },
-  { id: "5", title: "Database optimization", description: "Optimize slow queries and add indexes", status: "todo", priority: "low", projectId: "2", assigneeId: "1", dueDate: "2026-01-28", tags: ["backend", "performance"], createdAt: "2026-01-15" },
-  { id: "6", title: "User testing sessions", description: "Conduct 5 user testing sessions", status: "todo", priority: "high", projectId: "1", assigneeId: "2", dueDate: "2026-01-18", tags: ["research", "ux"], createdAt: "2026-01-13" },
-  { id: "7", title: "Email newsletter template", description: "Design responsive email template", status: "done", priority: "medium", projectId: "3", assigneeId: "5", dueDate: "2026-01-14", tags: ["design", "email"], createdAt: "2026-01-08" },
-  { id: "8", title: "Bug fixes for checkout", description: "Fix reported bugs in checkout flow", status: "in-progress", priority: "high", projectId: "1", assigneeId: "4", dueDate: "2026-01-19", tags: ["bug", "frontend"], createdAt: "2026-01-16" },
-]
-
-const initialActivities: Activity[] = [
-  { id: "1", type: "task_created", taskId: "8", userId: "1", timestamp: "2026-01-16T10:30:00", message: "created task 'Bug fixes for checkout'" },
-  { id: "2", type: "task_updated", taskId: "2", userId: "1", timestamp: "2026-01-16T09:15:00", message: "moved task to In Progress" },
-  { id: "3", type: "comment", taskId: "4", userId: "3", timestamp: "2026-01-15T16:45:00", message: "added a comment on 'Social media graphics'" },
-  { id: "4", type: "member_joined", userId: "5", timestamp: "2026-01-15T14:00:00", message: "joined the team" },
-  { id: "5", type: "task_completed", taskId: "7", userId: "5", timestamp: "2026-01-14T11:20:00", message: "completed task 'Email newsletter template'" },
-]
+import { authService } from "@/services/auth"
 
 export default function TaskFlowApp() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -61,10 +29,14 @@ export default function TaskFlowApp() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false)
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
+  const [isMessagePanelOpen, setIsMessagePanelOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [defaultDueDate, setDefaultDueDate] = useState<string | undefined>(undefined)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+
+  const [currentUser, setCurrentUser] = useState<TeamMember | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -81,6 +53,11 @@ export default function TaskFlowApp() {
         setProjects(projectsData);
         setTeamMembers(usersData);
         setActivities(activitiesData);
+        
+        // set current user
+        const user = authService.getCurrentUser();
+        setCurrentUser(user);
+
       } catch (error) {
         console.error("Failed to fetch data:", error);
       } finally {
@@ -166,9 +143,12 @@ export default function TaskFlowApp() {
         }}
         onOpenTeam={() => setIsTeamModalOpen(true)}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
+        onOpenMessages={() => setIsMessagePanelOpen(true)}
         isDarkMode={isDarkMode}
         onToggleDarkMode={toggleDarkMode}
         teamMembers={teamMembers}
+        currentUser={currentUser}
+        notifications={activities.slice(0, 5)}
         onMenuToggle={() => setIsMobileMenuOpen(true)}
       />
       
@@ -250,7 +230,13 @@ export default function TaskFlowApp() {
             <CalendarView
               tasks={filteredTasks}
               teamMembers={teamMembers}
+              projects={projects}
               onEditTask={handleEditTask}
+              onNewTask={(date?: string) => {
+                setEditingTask(null)
+                setDefaultDueDate(date)
+                setIsTaskModalOpen(true)
+              }}
             />
           )}
           
@@ -259,6 +245,7 @@ export default function TaskFlowApp() {
               tasks={tasks}
               projects={projects}
               teamMembers={teamMembers}
+              activities={activities}
             />
           )}
           
@@ -277,18 +264,24 @@ export default function TaskFlowApp() {
         onClose={() => {
           setIsTaskModalOpen(false)
           setEditingTask(null)
+          setDefaultDueDate(undefined)
         }}
         onSave={handleSaveTask}
         onDelete={editingTask ? () => handleDeleteTask(editingTask.id) : undefined}
         task={editingTask}
         projects={projects}
         teamMembers={teamMembers}
+        defaultDueDate={defaultDueDate}
       />
 
       <TeamModal
         isOpen={isTeamModalOpen}
         onClose={() => setIsTeamModalOpen(false)}
         teamMembers={teamMembers}
+        onMemberAdded={(newMember) => setTeamMembers([...teamMembers, newMember])}
+        onMemberUpdated={(updatedMember) => setTeamMembers(teamMembers.map(m => m.id === updatedMember.id ? updatedMember : m))}
+        onMemberRemoved={(memberId) => setTeamMembers(teamMembers.filter(m => m.id !== memberId))}
+        onOpenMessages={() => setIsMessagePanelOpen(true)}
       />
 
       <SettingsModal
@@ -296,6 +289,14 @@ export default function TaskFlowApp() {
         onClose={() => setIsSettingsModalOpen(false)}
         isDarkMode={isDarkMode}
         onToggleDarkMode={toggleDarkMode}
+      />
+
+      <MessagePanel
+        isOpen={isMessagePanelOpen}
+        onClose={() => setIsMessagePanelOpen(false)}
+        projects={projects}
+        teamMembers={teamMembers}
+        currentUser={currentUser}
       />
     </div>
   )

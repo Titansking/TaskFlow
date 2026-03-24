@@ -38,10 +38,17 @@ export const authService = {
     }
     return null;
   },
+
+  getProfile: async (): Promise<TeamMember> => {
+    const response = await api.get('/users/profile');
+    const user = { ...response.data.data, id: response.data.data._id };
+    localStorage.setItem('user', JSON.stringify(user));
+    return user;
+  },
   
   updateProfile: async (data: Partial<TeamMember>): Promise<TeamMember> => {
     const response = await api.put('/users/profile', data);
-    const updatedUser = response.data.data;
+    const updatedUser = { ...response.data.data, id: response.data.data._id };
     localStorage.setItem('user', JSON.stringify(updatedUser)); // Update local storage
     return updatedUser;
   }

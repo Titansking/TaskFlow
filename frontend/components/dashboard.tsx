@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import type { Task, Project, TeamMember, Activity } from "@/lib/types"
 
 interface DashboardProps {
@@ -41,7 +42,6 @@ export function Dashboard({ tasks, projects, teamMembers, activities, onEditTask
   const upcomingTasks = tasks
     .filter((t) => t.status !== "done")
     .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
-    .slice(0, 5)
 
   const getProjectName = (projectId: string) => projects.find((p) => p.id === projectId)?.name || "Unknown"
   const getProjectColor = (projectId: string) => projects.find((p) => p.id === projectId)?.color || "#888"
@@ -83,6 +83,7 @@ export function Dashboard({ tasks, projects, teamMembers, activities, onEditTask
             <CardDescription>Tasks that need your attention</CardDescription>
           </CardHeader>
           <CardContent>
+            <ScrollArea className="h-[400px] pr-4">
             <div className="space-y-4">
               {upcomingTasks.map((task) => {
                 const assignee = getTeamMember(task.assigneeId)
@@ -122,6 +123,7 @@ export function Dashboard({ tasks, projects, teamMembers, activities, onEditTask
                 <p className="text-center text-muted-foreground py-8">No upcoming tasks</p>
               )}
             </div>
+            </ScrollArea>
           </CardContent>
         </Card>
 
