@@ -9,6 +9,7 @@ export const getUsers = async (_req: Request, res: Response) => {
     const users = await User.find().select('-password'); // Exclude password
     return res.status(200).json(successResponse(users));
   } catch (error) {
+    console.error('Error in getUsers:', error);
     return res.status(500).json(errorResponse('Error fetching users'));
   }
 };
@@ -24,6 +25,7 @@ export const getUserById = async (req: Request, res: Response) => {
     
     return res.status(200).json(successResponse(user));
   } catch (error) {
+    console.error('Error in getUserById:', error);
     return res.status(500).json(errorResponse('Error fetching user'));
   }
 };
@@ -66,6 +68,7 @@ export const createUser = async (req: Request, res: Response) => {
 
     return res.status(201).json(successResponse(userResponse, 'User created successfully', 201));
   } catch (error) {
+    console.error('Error in createUser:', error);
     return res.status(500).json(errorResponse('Error creating user'));
   }
 };
@@ -82,6 +85,7 @@ export const getProfile = async (req: any, res: Response) => {
     
     return res.status(200).json(successResponse(user));
   } catch (error) {
+    console.error('Error in getProfile:', error);
     return res.status(500).json(errorResponse('Error fetching profile'));
   }
 };
@@ -106,6 +110,7 @@ export const updateProfile = async (req: any, res: Response) => {
     
     return res.status(200).json(successResponse(user, 'Profile updated successfully'));
   } catch (error) {
+    console.error('Error in updateProfile:', error);
     return res.status(500).json(errorResponse('Error updating profile'));
   }
 };
@@ -123,6 +128,7 @@ export const updateUser = async (req: Request, res: Response) => {
     
     return res.status(200).json(successResponse(user, 'User updated successfully'));
   } catch (error) {
+    console.error('Error in updateUser:', error);
     return res.status(500).json(errorResponse('Error updating user'));
   }
 };
@@ -138,6 +144,7 @@ export const deleteUser = async (req: Request, res: Response) => {
     
     return res.status(200).json(successResponse(null, 'User deleted successfully'));
   } catch (error) {
+    console.error('Error in deleteUser:', error);
     return res.status(500).json(errorResponse('Error deleting user'));
   }
 };
