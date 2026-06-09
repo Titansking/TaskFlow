@@ -4,26 +4,35 @@ import User from './models/User';
 import Project from './models/Project';
 import Task from './models/Task';
 import Activity from './models/Activity';
+import bcrypt from 'bcryptjs'; // Import bcrypt to hash passwords
 
 dotenv.config();
 
+// Main seed function to populate the database with initial mock data
 const seedData = async () => {
   try {
+    // 1. Establish connection to the database
     await connectDB();
     
+    // 2. Clear out any existing data to start fresh
     console.log('Clearing existing data...');
     await User.deleteMany({});
     await Project.deleteMany({});
     await Task.deleteMany({});
     await Activity.deleteMany({});
     
+    // 3. Create a secure default password for all seeded users
+    console.log('Hashing default password for seeded users...');
+    const salt = await bcrypt.genSalt(10);
+    const defaultPassword = await bcrypt.hash('password123', salt);
+    
     console.log('Seeding Users...');
     const users = await User.create([
-      { name: "Alex Johnson", email: "alex@taskflow.com", role: "Admin", avatar: "AJ", status: "online" },
-      { name: "Sarah Chen", email: "sarah@taskflow.com", role: "Project Manager", avatar: "SC", status: "online" },
-      { name: "Mike Williams", email: "mike@taskflow.com", role: "Team Member", avatar: "MW", status: "away" },
-      { name: "Emma Davis", email: "emma@taskflow.com", role: "Team Member", avatar: "ED", status: "offline" },
-      { name: "James Brown", email: "james@taskflow.com", role: "Team Member", avatar: "JB", status: "online" },
+      { name: "Alex Johnson", email: "alex@taskflow.com", role: "Admin", avatar: "AJ", status: "online", password: defaultPassword },
+      { name: "Sarah Chen", email: "sarah@taskflow.com", role: "Project Manager", avatar: "SC", status: "online", password: defaultPassword },
+      { name: "Mike Williams", email: "mike@taskflow.com", role: "Team Member", avatar: "MW", status: "away", password: defaultPassword },
+      { name: "Emma Davis", email: "emma@taskflow.com", role: "Team Member", avatar: "ED", status: "offline", password: defaultPassword },
+      { name: "James Brown", email: "james@taskflow.com", role: "Team Member", avatar: "JB", status: "online", password: defaultPassword },
     ]);
     
     const userMap = new Map(users.map(u => [u.email, u._id]));

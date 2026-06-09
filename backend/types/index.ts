@@ -1,16 +1,20 @@
 import { Request } from 'express';
 
 // JWT Payload Interface
+// This interface defines the data that we store inside the JWT token.
+// The token is a secure string that represents a logged-in session.
 export interface IJWTPayload {
-  userId: string;
-  email: string;
-  iat?: number;
-  exp?: number;
+  userId: string; // The database ID of the user
+  email: string;  // The email address of the user
+  role: 'Admin' | 'Project Manager' | 'Team Member'; // The security role of the user
+  iat?: number;   // Automatically added: Issued At timestamp
+  exp?: number;   // Automatically added: Expiry timestamp
 }
 
-// Extended Request with User
+// This extends the standard Express Request object.
+// It allows us to access the logged-in user's details via `req.user` in controllers.
 export interface AuthenticatedRequest extends Request {
-  user?: IJWTPayload;
+  user?: IJWTPayload; // The decoded token payload (only present if logged in)
 }
 
 // User Interface

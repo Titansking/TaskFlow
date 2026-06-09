@@ -35,15 +35,47 @@ export default function TaskFlowApp() {
   const [defaultDueDate, setDefaultDueDate] = useState<string | undefined>(undefined)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+
+  // Initialize dark mode from localStorage or system preference on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem("theme");
+      const isDark = savedTheme === "dark" || 
+        (!savedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      setIsDarkMode(isDark);
+      if (isDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    }
+  }, []);
   const [searchQuery, setSearchQuery] = useState("")
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false)
 
   const [currentUser, setCurrentUser] = useState<TeamMember | null>(null)
 
+  // On component mount, verify if the user is authenticated.
+  // If they are not logged in, redirect them to the login page.
+  // If they are logged in, fetch all tasks, projects, users, and activities.
   useEffect(() => {
+    // 1. Get the current logged-in user from localStorage
+    const user = authService.getCurrentUser();
+    
+    // If no user is found, redirect directly to the login page
+    if (!user) {
+      window.location.href = '/login';
+      return;
+    }
+    
+    // Set the user in state
+    setCurrentUser(user);
+
+    // 2. Fetch all app data from the backend APIs
     const fetchData = async () => {
       try {
         setIsLoading(true);
+        // Call all database fetch requests at the same time for speed
         const [tasksData, projectsData, usersData, activitiesData] = await Promise.all([
           taskService.getTasks(),
           projectService.getProjects(),
@@ -51,15 +83,11 @@ export default function TaskFlowApp() {
           activityService.getActivities()
         ]);
         
+        // Save the fetched data to state
         setTasks(tasksData);
         setProjects(projectsData);
         setTeamMembers(usersData);
         setActivities(activitiesData);
-        
-        // set current user
-        const user = authService.getCurrentUser();
-        setCurrentUser(user);
-
       } catch (error) {
         console.error("Failed to fetch data:", error);
       } finally {
@@ -128,8 +156,15 @@ export default function TaskFlowApp() {
   }
 
   const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode)
-    document.documentElement.classList.toggle("dark")
+    const newMode = !isDarkMode;
+    setIsDarkMode(newMode);
+    if (newMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
   }
 
   const handleCreateProject = async (projectData: Omit<Project, 'id'>) => {
@@ -185,8 +220,16 @@ export default function TaskFlowApp() {
           onChangeView={setCurrentView}
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-          onAddProject={() => setIsProjectModalOpen(true)}
-          onDeleteProject={handleDeleteProject}
+          onAddProject={
+            (currentUser?.role === 'Admin' || currentUser?.role === 'Project Manager')
+              ? () => setIsProjectModalOpen(true)
+              : undefined
+          }
+          onDeleteProject={
+            (currentUser?.role === 'Admin' || currentUser?.role === 'Project Manager')
+              ? handleDeleteProject
+              : undefined
+          }
           taskCounts={{
             todo: tasks.filter((t) => t.status === "todo").length,
             inProgress: tasks.filter((t) => t.status === "in-progress").length,
@@ -212,11 +255,19 @@ export default function TaskFlowApp() {
               }}
               collapsed={false}
               onToggleCollapse={() => {}}
-              onAddProject={() => {
-                setIsProjectModalOpen(true)
-                setIsMobileMenuOpen(false)
-              }}
-              onDeleteProject={handleDeleteProject}
+              onAddProject={
+                (currentUser?.role === 'Admin' || currentUser?.role === 'Project Manager')
+                  ? () => {
+                      setIsProjectModalOpen(true)
+                      setIsMobileMenuOpen(false)
+                    }
+                  : undefined
+              }
+              onDeleteProject={
+                (currentUser?.role === 'Admin' || currentUser?.role === 'Project Manager')
+                  ? handleDeleteProject
+                  : undefined
+              }
               taskCounts={{
                 todo: tasks.filter((t) => t.status === "todo").length,
                 inProgress: tasks.filter((t) => t.status === "in-progress").length,

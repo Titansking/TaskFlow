@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import Project from '../models/Project';
+import Task from '../models/Task';
 import { successResponse, errorResponse, notFoundResponse } from '../utils/response';
 
 export const getProjects = async (_req: Request, res: Response) => {
@@ -26,7 +27,11 @@ export const deleteProject = async (req: Request, res: Response) => {
     if (!project) {
       return res.status(404).json(notFoundResponse('Project not found'));
     }
-    return res.status(200).json(successResponse(null, 'Project deleted successfully'));
+    
+    // Cascading delete: delete all tasks associated with this project
+    await Task.deleteMany({ projectId: req.params.id });
+    
+    return res.status(200).json(successResponse(null, 'Project and associated tasks deleted successfully'));
   } catch (error) {
     return res.status(500).json(errorResponse('Error deleting project'));
   }

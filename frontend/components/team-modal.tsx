@@ -26,6 +26,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { userService } from "@/services/data"
+import { authService } from "@/services/auth" // Import authService to check user permissions
 import type { TeamMember } from "@/lib/types"
 
 interface TeamModalProps {
@@ -39,6 +40,8 @@ interface TeamModalProps {
 }
 
 export function TeamModal({ isOpen, onClose, teamMembers, onMemberAdded, onMemberUpdated, onMemberRemoved, onOpenMessages }: TeamModalProps) {
+  // 1. Get the current logged-in user to check their role/permissions
+  const currentUser = authService.getCurrentUser();
   const [isInviting, setIsInviting] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -121,12 +124,15 @@ export function TeamModal({ isOpen, onClose, teamMembers, onMemberAdded, onMembe
 
         {!isInviting ? (
           <>
-            <div className="flex justify-end mb-4">
-              <Button onClick={() => setIsInviting(true)} className="gap-2">
-                <UserPlus className="h-4 w-4" />
-                Invite Member
-              </Button>
-            </div>
+            {/* Only show the Invite Member button if the logged-in user is an Admin or Project Manager */}
+            {(currentUser?.role === 'Admin' || currentUser?.role === 'Project Manager') && (
+              <div className="flex justify-end mb-4">
+                <Button onClick={() => setIsInviting(true)} className="gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Invite Member
+                </Button>
+              </div>
+            )}
 
             <div className="space-y-4 max-h-[60vh] overflow-y-auto">
               {teamMembers.map((member) => (
@@ -176,26 +182,37 @@ export function TeamModal({ isOpen, onClose, teamMembers, onMemberAdded, onMembe
                           Send Message
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuSub>
-                          <DropdownMenuSubTrigger>Change Role</DropdownMenuSubTrigger>
-                          <DropdownMenuPortal>
-                            <DropdownMenuSubContent>
-                              <DropdownMenuItem onClick={() => handleUpdateRole(member.id, "Admin")}>
-                                Admin
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleUpdateRole(member.id, "Project Manager")}>
-                                Project Manager
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleUpdateRole(member.id, "Team Member")}>
-                                Team Member
-                              </DropdownMenuItem>
-                            </DropdownMenuSubContent>
-                          </DropdownMenuPortal>
-                        </DropdownMenuSub>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteMember(member.id)}>
-                          Remove from Team
-                        </DropdownMenuItem>
+                        {/* Only allow Admins to change roles or remove members */}
+                        {currentUser?.role === 'Admin' ? (
+                          <>
+                            <DropdownMenuSub>
+                              <DropdownMenuSubTrigger>Change Role</DropdownMenuSubTrigger>
+                              <DropdownMenuPortal>
+                                <DropdownMenuSubContent>
+                                  <DropdownMenuItem onClick={() => handleUpdateRole(member.id, "Admin")}>
+                                    Admin
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleUpdateRole(member.id, "Project Manager")}>
+                                    Project Manager
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleUpdateRole(member.id, "Team Member")}>
+                                    Team Member
+                                  </DropdownMenuItem>
+                                </DropdownMenuSubContent>
+                              </DropdownMenuPortal>
+                            </DropdownMenuSub>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteMember(member.id)}>
+                              Remove from Team
+                            </DropdownMenuItem>
+                          </>
+                        ) : (
+                          // For non-admins, show a small disabled indicator or just nothing.
+                          // Let's show a text indicating they have no admin actions available
+                          <DropdownMenuItem disabled className="text-xs text-muted-foreground">
+                            No administrative options
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>

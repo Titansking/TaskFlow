@@ -83,6 +83,12 @@ export function TaskModal({ isOpen, onClose, onSave, onDelete, task, projects, t
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!projectId || !assigneeId) {
+      alert("Please create or select a project and an assignee before creating a task.");
+      return;
+    }
+
     const taskData = {
       title,
       description,

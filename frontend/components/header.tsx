@@ -3,6 +3,7 @@
 import { Bell, Moon, Plus, Search, Settings, Sun, Users, Menu, MessageSquare } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { authService } from "@/services/auth"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -217,9 +218,7 @@ export function Header({
                 <DropdownMenuItem onClick={onOpenTeam}>Team</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="text-destructive" onClick={() => {
-                  localStorage.removeItem('token');
-                  localStorage.removeItem('user');
-                  window.location.href = '/login';
+                  authService.logout();
                 }}>Log out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

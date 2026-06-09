@@ -32,6 +32,7 @@ export const authService = {
   },
 
   getCurrentUser: (): TeamMember | null => {
+    if (typeof window === 'undefined') return null;
     const userStr = localStorage.getItem('user');
     if (userStr) {
       return JSON.parse(userStr);

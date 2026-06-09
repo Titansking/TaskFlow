@@ -97,7 +97,16 @@ export const updateProfile = async (req: any, res: Response) => {
     
     // Create update object
     const updateData: any = {};
-    if (name) updateData.name = name;
+    if (name) {
+      updateData.name = name;
+      if (!avatar) {
+        const nameParts = name.trim().split(/\s+/).filter(Boolean);
+        const initials = nameParts.length > 0
+          ? nameParts.map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
+          : 'U';
+        updateData.avatar = initials;
+      }
+    }
     if (email) updateData.email = email;
     if (avatar) updateData.avatar = avatar;
     if (status) updateData.status = status;
