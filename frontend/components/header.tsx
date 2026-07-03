@@ -1,11 +1,17 @@
 "use client"
 
+import React from "react"
+// Import icons from lucide-react library
 import { Bell, Moon, Plus, Search, Settings, Sun, Users, Menu, MessageSquare } from "lucide-react"
 import Link from "next/link"
+
+// Import components from the UI folder
 import { Button } from "@/components/ui/button"
-import { authService } from "@/services/auth"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+
+// Import dropdown menu components
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,8 +20,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Badge } from "@/components/ui/badge"
-import type { TeamMember, Activity } from "@/lib/types"
+
+// Import tooltip components
 import {
   Tooltip,
   TooltipContent,
@@ -23,6 +29,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
+// Import types for user and notifications
+import type { TeamMember, Activity } from "@/lib/types"
+import { authService } from "@/services/auth"
+
+// Define the arguments (Props) that our Header component will receive
 interface HeaderProps {
   searchQuery: string
   onSearchChange: (query: string) => void
@@ -38,6 +49,7 @@ interface HeaderProps {
   onMenuToggle: () => void
 }
 
+// Header component definition
 export function Header({
   searchQuery,
   onSearchChange,
@@ -52,6 +64,8 @@ export function Header({
   notifications,
   onMenuToggle,
 }: HeaderProps) {
+  
+  // Use current user if available, otherwise default to a guest user to prevent crash
   const user = currentUser || {
     id: "guest",
     name: "Guest User",
@@ -63,9 +77,13 @@ export function Header({
 
   return (
     <TooltipProvider>
+      {/* Sticky header bar wrapper */}
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex h-16 items-center justify-between px-4 md:px-6">
+          
+          {/* LEFT SECTION: Logo and Mobile Menu Toggle */}
           <div className="flex items-center gap-4">
+            {/* Mobile menu button (only visible on small screens) */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuToggle}>
@@ -76,6 +94,7 @@ export function Header({
               <TooltipContent>Menu</TooltipContent>
             </Tooltip>
             
+            {/* TaskFlow branding link */}
             <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
                 T
@@ -84,8 +103,10 @@ export function Header({
             </Link>
           </div>
 
+          {/* MIDDLE SECTION: Search Bar */}
           <div className="flex flex-1 items-center justify-center px-4 md:px-8">
             <div className="relative w-full max-w-md hidden md:block">
+              {/* Search icon inside search input */}
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search tasks..."
@@ -96,7 +117,10 @@ export function Header({
             </div>
           </div>
 
+          {/* RIGHT SECTION: Quick Action Buttons and Menus */}
           <div className="flex items-center gap-2">
+            
+            {/* 1. New Task Button */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button onClick={onNewTask} size="sm" className="gap-2">
@@ -107,16 +131,7 @@ export function Header({
               <TooltipContent>Create New Task</TooltipContent>
             </Tooltip>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" onClick={onOpenMessages} className="hidden md:inline-flex">
-                  <MessageSquare className="h-5 w-5" />
-                  <span className="sr-only">Messages</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Messages</TooltipContent>
-            </Tooltip>
-
+            {/* 3. Team Management Button */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon" onClick={onOpenTeam} className="hidden md:inline-flex">
@@ -127,47 +142,55 @@ export function Header({
               <TooltipContent>Manage Team</TooltipContent>
             </Tooltip>
 
+            {/* 4. Notifications Dropdown Button */}
+            {/* Note: We removed the Tooltip wrap here to fix the Radix trigger conflict */}
             <DropdownMenu>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="relative">
-                      <Bell className="h-5 w-5" />
-                      {notifications.length > 0 && (
-                        <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs">
-                          {notifications.length}
-                        </Badge>
-                      )}
-                      <span className="sr-only">Notifications</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                </TooltipTrigger>
-                <TooltipContent>Notifications</TooltipContent>
-              </Tooltip>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative">
+                  <Bell className="h-5 w-5" />
+                  {/* Show numeric badge only if there are notifications */}
+                  {notifications.length > 0 && (
+                    <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center bg-destructive text-destructive-foreground">
+                      {notifications.length}
+                    </Badge>
+                  )}
+                  <span className="sr-only">Notifications</span>
+                </Button>
+              </DropdownMenuTrigger>
+              
               <DropdownMenuContent align="end" className="w-80">
                 <DropdownMenuLabel>Notifications</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                
+                {/* Render the notification list if any exist, otherwise show empty message */}
                 {notifications.length > 0 ? (
-                  notifications.map((notification) => (
-                    <DropdownMenuItem key={notification.id} className="flex flex-col items-start gap-1 py-3">
-                      <span className="font-medium">{notification.type.replace('_', ' ')}</span>
-                      <span className="text-sm text-muted-foreground">
-                        {notification.message}
-                      </span>
-                    </DropdownMenuItem>
-                  ))
+                  notifications.map((notification) => {
+                    // Safe string replace in case type is not a string
+                    const rawType = notification.type || "Notification";
+                    const formattedType = rawType.replace('_', ' ');
+
+                    return (
+                      <DropdownMenuItem key={notification.id} className="flex flex-col items-start gap-1 py-3">
+                        <span className="font-medium capitalize">{formattedType}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {notification.message}
+                        </span>
+                      </DropdownMenuItem>
+                    );
+                  })
                 ) : (
                   <div className="p-4 text-center text-sm text-muted-foreground">
                     No new notifications
                   </div>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="justify-center text-primary">
+                <DropdownMenuItem className="justify-center text-primary cursor-pointer">
                   View all notifications
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {/* 5. Dark/Light Mode Toggle Button */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon" onClick={onToggleDarkMode}>
@@ -178,6 +201,7 @@ export function Header({
               <TooltipContent>Toggle Theme</TooltipContent>
             </Tooltip>
 
+            {/* 6. Settings Button */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon" onClick={onOpenSettings} className="hidden md:inline-flex">
@@ -188,21 +212,18 @@ export function Header({
               <TooltipContent>Settings</TooltipContent>
             </Tooltip>
 
+            {/* 7. User Profile Dropdown Button */}
+            {/* Note: We removed the Tooltip wrap here to fix the Radix trigger conflict */}
             <DropdownMenu>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="bg-primary text-primary-foreground">
-                          {user.avatar}
-                        </AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                </TooltipTrigger>
-                <TooltipContent>User Profile</TooltipContent>
-              </Tooltip>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      {user.avatar}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>
                   <div className="flex flex-col">
@@ -213,15 +234,21 @@ export function Header({
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => window.location.href = "/profile"}>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Billing</DropdownMenuItem>
-                <DropdownMenuItem onClick={onOpenTeam}>Team</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => window.location.href = "/profile"} className="cursor-pointer">
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onOpenTeam} className="cursor-pointer">
+                  Team
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive" onClick={() => {
+                <DropdownMenuItem className="text-destructive cursor-pointer" onClick={() => {
                   authService.logout();
-                }}>Log out</DropdownMenuItem>
+                }}>
+                  Log out
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
           </div>
         </div>
       </header>
