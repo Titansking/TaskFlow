@@ -14,17 +14,18 @@ import {
   Plus,
   Trash2,
 } from "lucide-react"
+import type { ViewId } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import type { Project } from "@/lib/types"
 
-interface SidebarProps {
+export interface SidebarProps {
   projects: Project[]
   selectedProject: string | null
   onSelectProject: (projectId: string | null) => void
-  currentView: "dashboard" | "kanban" | "calendar" | "analytics" | "timeline"
-  onChangeView: (view: "dashboard" | "kanban" | "calendar" | "analytics" | "timeline") => void
+  currentView: ViewId
+  onChangeView: (view: ViewId) => void
   collapsed: boolean
   onToggleCollapse: () => void
   onAddProject?: () => void
@@ -49,14 +50,16 @@ export function Sidebar({
   taskCounts,
   className,
 }: SidebarProps & { className?: string }) {
+  // Deleting a project is destructive, so the row turns into a confirm button
+  // on the first click and only deletes on the second.
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null)
 
-  const navItems = [
-    { id: "dashboard" as const, label: "Dashboard", icon: Home },
-    { id: "kanban" as const, label: "Kanban Board", icon: Layers },
-    { id: "calendar" as const, label: "Calendar", icon: Calendar },
-    { id: "analytics" as const, label: "Analytics", icon: BarChart3 },
-    { id: "timeline" as const, label: "Timeline", icon: Clock },
+  const navItems: { id: ViewId; label: string; icon: typeof Home }[] = [
+    { id: "dashboard", label: "Dashboard", icon: Home },
+    { id: "kanban", label: "Kanban Board", icon: Layers },
+    { id: "calendar", label: "Calendar", icon: Calendar },
+    { id: "analytics", label: "Analytics", icon: BarChart3 },
+    { id: "timeline", label: "Timeline", icon: Clock },
   ]
 
   return (

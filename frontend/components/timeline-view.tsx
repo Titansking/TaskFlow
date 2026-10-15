@@ -33,7 +33,7 @@ export function TimelineView({ activities, tasks, teamMembers }: TimelineViewPro
   }
 
   const groupedActivities = activities.reduce((groups, activity) => {
-    const date = new Date(activity.timestamp).toLocaleDateString("en-US", {
+    const date = new Date(activity.createdAt).toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
       month: "long",
@@ -92,7 +92,7 @@ export function TimelineView({ activities, tasks, teamMembers }: TimelineViewPro
                             </div>
                           )}
                           <p className="text-xs text-muted-foreground ml-8">
-                            {new Date(activity.timestamp).toLocaleTimeString()}
+                            {new Date(activity.createdAt).toLocaleTimeString()}
                           </p>
                         </div>
                       </div>

@@ -12,12 +12,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import type { Project } from "@/lib/types"
+import type { ProjectDraft } from "@/lib/types"
 
 interface ProjectModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (project: Omit<Project, "id">) => void
+  onSave: (project: ProjectDraft) => Promise<void>
 }
 
 const presetColors = [
@@ -38,18 +38,30 @@ const presetColors = [
 export function ProjectModal({ isOpen, onClose, onSave }: ProjectModalProps) {
   const [name, setName] = useState("")
   const [color, setColor] = useState(presetColors[0])
+  const [error, setError] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!name.trim()) return
-    onSave({
-      name: name.trim(),
-      color,
-      members: [],
-    })
+  const reset = () => {
     setName("")
     setColor(presetColors[0])
-    onClose()
+    setError(null)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!name.trim()) return
+
+    setIsSaving(true)
+    setError(null)
+
+    try {
+      await onSave({ name: name.trim(), color, members: [] })
+      reset()
+      onClose()
+    } catch {
+      setError("Could not create the project. Please try again.")
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -62,6 +74,12 @@ export function ProjectModal({ isOpen, onClose, onSave }: ProjectModalProps) {
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-5">
+          {error && (
+            <div role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="projectName">Project Name</Label>
             <Input
@@ -123,7 +141,9 @@ export function ProjectModal({ isOpen, onClose, onSave }: ProjectModalProps) {
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit">Create Project</Button>
+            <Button type="submit" disabled={isSaving}>
+              {isSaving ? "Creating..." : "Create Project"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

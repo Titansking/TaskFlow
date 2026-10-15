@@ -1,32 +1,55 @@
 {
   "info": {
-    "name": "TaskFlow API Collection",
-    "description": "API endpoints for the TaskFlow project.",
+    "name": "TaskFlow API",
+    "description": "REST API for TaskFlow.\n\nRun `npm run seed` in `backend/` first \u2014 every seeded account uses the password `password123`.\n\nSuggested order: Login \u2192 everything else. Requests marked \"admin\" need an Admin token (alex@taskflow.com).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
-  "auth": {
-    "type": "bearer",
-    "bearer": [
-      {
-        "key": "token",
-        "value": "{{token}}",
-        "type": "string"
-      }
-    ]
-  },
+  "variable": [
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "project_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "task_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
   "item": [
     {
       "name": "Health",
       "item": [
         {
-          "name": "Get API Health",
+          "name": "Health check",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/health",
-              "host": ["{{base_url}}"],
-              "path": ["health"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{base_url}}",
+                "health"
+              ]
             }
           }
         }
@@ -39,10 +62,16 @@
           "name": "Register",
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}",
+              "raw": "{\n  \"name\": \"New Person\",\n  \"email\": \"new@taskflow.com\",\n  \"password\": \"passw0rd1\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -51,19 +80,44 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/register",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "register"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{base_url}}",
+                "auth",
+                "register"
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('status is 2xx', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "pm.collectionVariables.set('null', body.data.token);"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Login",
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}",
+              "raw": "{\n  \"email\": \"alex@taskflow.com\",\n  \"password\": \"password123\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -72,10 +126,29 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/login",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "login"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{base_url}}",
+                "auth",
+                "login"
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('status is 2xx', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "pm.collectionVariables.set('null', body.data.token);"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -83,25 +156,94 @@
       "name": "Users",
       "item": [
         {
-          "name": "Get All Users",
+          "name": "List users",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/users",
-              "host": ["{{base_url}}"],
-              "path": ["users"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{base_url}}",
+                "users"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('status is 2xx', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "pm.collectionVariables.set('user_id', body.data.items[0]._id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get user",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{base_url}}",
+                "users",
+                "{{user_id}}"
+              ]
             }
           }
         },
         {
-          "name": "Create User",
+          "name": "Invite user (admin or project manager)",
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"New User\",\n  \"email\": \"newuser@example.com\",\n  \"password\": \"password123\"\n}",
+              "raw": "{\n  \"name\": \"Invited Person\",\n  \"email\": \"invited@taskflow.com\",\n  \"password\": \"temp1234\",\n  \"role\": \"Team Member\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -110,31 +252,77 @@
             },
             "url": {
               "raw": "{{base_url}}/users",
-              "host": ["{{base_url}}"],
-              "path": ["users"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{base_url}}",
+                "users"
+              ]
             }
           }
         },
         {
-          "name": "Get Profile",
+          "name": "Get my profile",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/users/profile",
-              "host": ["{{base_url}}"],
-              "path": ["users", "profile"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{base_url}}",
+                "users",
+                "profile"
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('status is 2xx', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "pm.collectionVariables.set('user_id', body.data._id);"
+                ]
+              }
+            }
+          ]
         },
         {
-          "name": "Update Profile",
+          "name": "Update my profile",
           "request": {
             "method": "PUT",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Name\"\n}",
+              "raw": "{\n  \"name\": \"Alex Johnson\",\n  \"status\": \"away\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -143,37 +331,36 @@
             },
             "url": {
               "raw": "{{base_url}}/users/profile",
-              "host": ["{{base_url}}"],
-              "path": ["users", "profile"]
-            }
-          }
-        },
-        {
-          "name": "Get User By ID",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/users/:id",
-              "host": ["{{base_url}}"],
-              "path": ["users", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "user_id_here"
-                }
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{base_url}}",
+                "users",
+                "profile"
               ]
             }
           }
         },
         {
-          "name": "Update User",
+          "name": "Update user role (admin)",
           "request": {
             "method": "PUT",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"role\": \"admin\"\n}",
+              "raw": "{\n  \"role\": \"Team Member\",\n  \"status\": \"online\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -181,32 +368,43 @@
               }
             },
             "url": {
-              "raw": "{{base_url}}/users/:id",
-              "host": ["{{base_url}}"],
-              "path": ["users", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "user_id_here"
-                }
+              "raw": "{{base_url}}/users/{{user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{base_url}}",
+                "users",
+                "{{user_id}}"
               ]
             }
           }
         },
         {
-          "name": "Delete User",
+          "name": "Delete user (admin)",
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "url": {
-              "raw": "{{base_url}}/users/:id",
-              "host": ["{{base_url}}"],
-              "path": ["users", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "user_id_here"
-                }
+              "raw": "{{base_url}}/users/{{user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{base_url}}",
+                "users",
+                "{{user_id}}"
               ]
             }
           }
@@ -217,25 +415,65 @@
       "name": "Projects",
       "item": [
         {
-          "name": "Get All Projects",
+          "name": "List projects",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/projects",
-              "host": ["{{base_url}}"],
-              "path": ["projects"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{base_url}}",
+                "projects"
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('status is 2xx', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "pm.collectionVariables.set('project_id', body.data.items[0]._id);"
+                ]
+              }
+            }
+          ]
         },
         {
-          "name": "Create Project",
+          "name": "Create project (admin or project manager)",
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"New Project\",\n  \"description\": \"Project Description\"\n}",
+              "raw": "{\n  \"name\": \"Website Redesign\",\n  \"color\": \"#3b82f6\",\n  \"members\": []\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -244,25 +482,54 @@
             },
             "url": {
               "raw": "{{base_url}}/projects",
-              "host": ["{{base_url}}"],
-              "path": ["projects"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{base_url}}",
+                "projects"
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('status is 2xx', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "pm.collectionVariables.set('project_id', body.data._id);"
+                ]
+              }
+            }
+          ]
         },
         {
-          "name": "Delete Project",
+          "name": "Delete project (admin or project manager)",
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "url": {
-              "raw": "{{base_url}}/projects/:id",
-              "host": ["{{base_url}}"],
-              "path": ["projects", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "project_id_here"
-                }
+              "raw": "{{base_url}}/projects/{{project_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{base_url}}",
+                "projects",
+                "{{project_id}}"
               ]
             }
           }
@@ -273,79 +540,205 @@
       "name": "Tasks",
       "item": [
         {
-          "name": "Get All Tasks",
+          "name": "List tasks",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/tasks",
-              "host": ["{{base_url}}"],
-              "path": ["tasks"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{base_url}}",
+                "tasks"
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('status is 2xx', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "pm.collectionVariables.set('task_id', body.data.items[0]._id);"
+                ]
+              }
+            }
+          ]
         },
         {
-          "name": "Create Task",
+          "name": "List tasks by project",
           "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"New Task\",\n  \"description\": \"Task description\",\n  \"projectId\": \"project_id_here\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
               }
-            },
+            ],
             "url": {
-              "raw": "{{base_url}}/tasks",
-              "host": ["{{base_url}}"],
-              "path": ["tasks"]
-            }
-          }
-        },
-        {
-          "name": "Update Task",
-          "request": {
-            "method": "PUT",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": \"completed\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{base_url}}/tasks/:id",
-              "host": ["{{base_url}}"],
-              "path": ["tasks", ":id"],
-              "variable": [
+              "raw": "{{base_url}}/tasks?projectId={{project_id}}&status=todo&page=1&limit=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{base_url}}",
+                "tasks"
+              ],
+              "query": [
                 {
-                  "key": "id",
-                  "value": "task_id_here"
+                  "key": "projectId",
+                  "value": "{{project_id}}"
+                },
+                {
+                  "key": "status",
+                  "value": "todo"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
                 }
               ]
             }
           }
         },
         {
-          "name": "Delete Task",
+          "name": "Create task",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Design homepage mockup\",\n  \"description\": \"Create high-fidelity mockups for the new homepage\",\n  \"projectId\": \"{{project_id}}\",\n  \"assigneeId\": \"{{user_id}}\",\n  \"dueDate\": \"2026-12-01\",\n  \"priority\": \"high\",\n  \"tags\": [\n    \"design\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/tasks",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{base_url}}",
+                "tasks"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('status is 2xx', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "pm.collectionVariables.set('task_id', body.data._id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update task status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"done\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/tasks/{{task_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{base_url}}",
+                "tasks",
+                "{{task_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete task",
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "url": {
-              "raw": "{{base_url}}/tasks/:id",
-              "host": ["{{base_url}}"],
-              "path": ["tasks", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "task_id_here"
-                }
+              "raw": "{{base_url}}/tasks/{{task_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{base_url}}",
+                "tasks",
+                "{{task_id}}"
               ]
             }
           }
@@ -356,25 +749,58 @@
       "name": "Activities",
       "item": [
         {
-          "name": "Get Activities",
+          "name": "List activities",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "url": {
-              "raw": "{{base_url}}/activities",
-              "host": ["{{base_url}}"],
-              "path": ["activities"]
+              "raw": "{{base_url}}/activities?limit=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{base_url}}",
+                "activities"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
             }
           }
         },
         {
-          "name": "Create Activity",
+          "name": "Create activity (comment)",
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"action\": \"created\",\n  \"entityType\": \"task\",\n  \"entityId\": \"task_id_here\"\n}",
+              "raw": "{\n  \"type\": \"comment\",\n  \"message\": \"Looks good to me\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -383,8 +809,13 @@
             },
             "url": {
               "raw": "{{base_url}}/activities",
-              "host": ["{{base_url}}"],
-              "path": ["activities"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{base_url}}",
+                "activities"
+              ]
             }
           }
         }

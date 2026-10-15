@@ -1,36 +1,42 @@
-"use client"
+/**
+ * Login page.
+ *
+ * The only thing this file owns is the form. Calling `authService.login()`
+ * persists the session, so success is simply a redirect.
+ */
+'use client';
 
-import { useState } from "react"
-import { Eye, EyeOff, Sparkles } from "lucide-react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { authService } from "@/services/auth"
+import { useState } from 'react';
+import { Eye, EyeOff, Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ApiError } from '@/lib/api';
+import { authService } from '@/lib/api';
 
 export default function LoginPage() {
-  const router = useRouter()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setIsLoading(true);
+    setError('');
 
     try {
-      await authService.login({ email, password })
-      router.push("/")
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Login failed")
-    } finally {
-      setIsLoading(false)
+      await authService.login({ email, password });
+      router.replace('/');
+    } catch (cause) {
+      setError(cause instanceof ApiError ? cause.message : 'Login failed');
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="login-bg flex min-h-screen items-center justify-center p-4">
@@ -64,7 +70,7 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="rounded-lg bg-red-500/20 border border-red-400/30 p-3 text-sm text-red-100">
+              <div role="alert" className="rounded-lg bg-red-500/20 border border-red-400/30 p-3 text-sm text-red-100">
                 {error}
               </div>
             )}
@@ -80,7 +86,7 @@ export default function LoginPage() {
                 autoComplete="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(event) => setEmail(event.target.value)}
                 className="h-11 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-white/40 focus:ring-white/20"
               />
             </div>
@@ -92,11 +98,11 @@ export default function LoginPage() {
               <div className="relative">
                 <Input
                   id="password"
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(event) => setPassword(event.target.value)}
                   className="h-11 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-white/40 focus:ring-white/20 pr-11"
                 />
                 <Button
@@ -104,15 +110,11 @@ export default function LoginPage() {
                   variant="ghost"
                   size="icon"
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-white/50 hover:text-white/80"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={() => setShowPassword((visible) => !visible)}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   <span className="sr-only">
-                    {showPassword ? "Hide password" : "Show password"}
+                    {showPassword ? 'Hide password' : 'Show password'}
                   </span>
                 </Button>
               </div>
@@ -124,7 +126,7 @@ export default function LoginPage() {
               className="btn-gradient w-full h-11 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
             >
               {isLoading ? (
-                "Signing in..."
+                'Signing in...'
               ) : (
                 <>
                   <Sparkles className="h-4 w-4" />
@@ -135,7 +137,7 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-6 text-center text-sm text-white/50">
-            Don&apos;t have an account?{" "}
+            Don&apos;t have an account?{' '}
             <Link
               href="/register"
               className="font-medium text-white/80 underline decoration-white/30 underline-offset-4 hover:text-white hover:decoration-white/60 transition-colors"
@@ -146,5 +148,5 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

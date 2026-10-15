@@ -85,12 +85,12 @@ export function AnalyticsView({ tasks, projects, teamMembers, activities }: Anal
     
     const created = activities.filter(a => 
       a.type === "task_created" && 
-      new Date(a.timestamp).toLocaleDateString() === dayStr
+      new Date(a.createdAt).toLocaleDateString() === dayStr
     ).length
 
     const completed = activities.filter(a => 
       a.type === "task_completed" && 
-      new Date(a.timestamp).toLocaleDateString() === dayStr
+      new Date(a.createdAt).toLocaleDateString() === dayStr
     ).length
 
     return {

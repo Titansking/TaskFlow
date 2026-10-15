@@ -82,9 +82,6 @@ export function CalendarView({ tasks, teamMembers, projects, onEditTask, onNewTa
     today.getMonth() === month &&
     today.getDate() === date
 
-  const getProjectColor = (projectId: string) =>
-    projects.find((p) => p.id === projectId)?.color || "#888"
-
   const getProjectName = (projectId: string) =>
     projects.find((p) => p.id === projectId)?.name || "Unknown"
 
@@ -96,7 +93,6 @@ export function CalendarView({ tasks, teamMembers, projects, onEditTask, onNewTa
   }
 
   // Stats
-  const todayStr = formatDateStr(today.getDate())
   const stats = {
     total: tasks.length,
     todo: tasks.filter(t => t.status === "todo").length,

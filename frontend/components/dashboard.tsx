@@ -19,7 +19,6 @@ interface DashboardProps {
 }
 
 export function Dashboard({ tasks, projects, teamMembers, activities, onEditTask, onNewTask }: DashboardProps) {
-  const todoTasks = tasks.filter((t) => t.status === "todo")
   const inProgressTasks = tasks.filter((t) => t.status === "in-progress")
   const doneTasks = tasks.filter((t) => t.status === "done")
   const overdueTasks = tasks.filter((t) => new Date(t.dueDate) < new Date() && t.status !== "done")
@@ -185,7 +184,7 @@ export function Dashboard({ tasks, projects, teamMembers, activities, onEditTask
                         <span className="text-muted-foreground">{activity.message}</span>
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(activity.timestamp).toLocaleString()}
+                        {new Date(activity.createdAt).toLocaleString()}
                       </p>
                     </div>
                   </div>

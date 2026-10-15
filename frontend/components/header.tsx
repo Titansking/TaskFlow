@@ -2,8 +2,9 @@
 
 import React from "react"
 // Import icons from lucide-react library
-import { Bell, Moon, Plus, Search, Settings, Sun, Users, Menu, MessageSquare } from "lucide-react"
+import { Bell, Menu, Moon, Plus, Search, Settings, Sun, Users } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 // Import components from the UI folder
 import { Button } from "@/components/ui/button"
@@ -31,7 +32,7 @@ import {
 
 // Import types for user and notifications
 import type { TeamMember, Activity } from "@/lib/types"
-import { authService } from "@/services/auth"
+import { logout } from "@/lib/session"
 
 // Define the arguments (Props) that our Header component will receive
 interface HeaderProps {
@@ -40,10 +41,8 @@ interface HeaderProps {
   onNewTask: () => void
   onOpenTeam: () => void
   onOpenSettings: () => void
-  onOpenMessages: () => void
   isDarkMode: boolean
   onToggleDarkMode: () => void
-  teamMembers: TeamMember[]
   currentUser: TeamMember | null
   notifications: Activity[]
   onMenuToggle: () => void
@@ -56,23 +55,24 @@ export function Header({
   onNewTask,
   onOpenTeam,
   onOpenSettings,
-  onOpenMessages,
   isDarkMode,
   onToggleDarkMode,
-  teamMembers,
   currentUser,
   notifications,
   onMenuToggle,
 }: HeaderProps) {
-  
-  // Use current user if available, otherwise default to a guest user to prevent crash
-  const user = currentUser || {
-    id: "guest",
-    name: "Guest User",
-    email: "guest@example.com",
-    role: "Team Member",
-    avatar: "G",
-    status: "offline"
+  const router = useRouter()
+
+  // Fall back to a guest so the avatar never renders null while the session loads
+  const user: TeamMember = currentUser ?? {
+    id: '',
+    name: 'Guest User',
+    email: '',
+    role: 'Team Member',
+    avatar: 'G',
+    status: 'offline',
+    createdAt: '',
+    updatedAt: '',
   }
 
   return (
@@ -234,7 +234,7 @@ export function Header({
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => window.location.href = "/profile"} className="cursor-pointer">
+                <DropdownMenuItem onClick={() => router.push("/profile")} className="cursor-pointer">
                   Profile
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onOpenTeam} className="cursor-pointer">
@@ -242,7 +242,7 @@ export function Header({
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="text-destructive cursor-pointer" onClick={() => {
-                  authService.logout();
+                  logout();
                 }}>
                   Log out
                 </DropdownMenuItem>

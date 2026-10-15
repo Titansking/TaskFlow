@@ -1,42 +1,42 @@
-"use client"
+/**
+ * Registration page.
+ *
+ * The password rules mirror the server's Zod schema, so the user gets instant
+ * feedback instead of a round trip. The server still enforces them.
+ */
+'use client';
 
-import { useState } from "react"
-import { Sparkles } from "lucide-react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { authService } from "@/services/auth"
+import { useState } from 'react';
+import { Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ApiError } from '@/lib/api';
+import { authService } from '@/lib/api';
 
-// Beautiful, premium Register page with glassmorphism, animated floating orbs,
-// and smooth gradients matching the gorgeous styling of the Login page.
 export default function RegisterPage() {
-  const router = useRouter()
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
+  const router = useRouter();
+  const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  // Handle registering a new user when form is submitted
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
+  const update = (key: keyof typeof form, value: string) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setIsLoading(true);
+    setError('');
 
     try {
-      // 1. Send register request to backend
-      await authService.register({ name, email, password })
-      // 2. Redirect to dashboard on success
-      router.push("/")
-    } catch (err: any) {
-      // 3. Show error message on failure
-      setError(err.response?.data?.message || "Registration failed")
-    } finally {
-      setIsLoading(false)
+      await authService.register(form);
+      router.replace('/');
+    } catch (cause) {
+      setError(cause instanceof ApiError ? cause.message : 'Registration failed');
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="login-bg flex min-h-screen items-center justify-center p-4">
@@ -70,7 +70,7 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="rounded-lg bg-red-500/20 border border-red-400/30 p-3 text-sm text-red-100">
+              <div role="alert" className="rounded-lg bg-red-500/20 border border-red-400/30 p-3 text-sm text-red-100">
                 {error}
               </div>
             )}
@@ -83,9 +83,11 @@ export default function RegisterPage() {
                 id="name"
                 type="text"
                 placeholder="John Doe"
+                autoComplete="name"
                 required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                maxLength={80}
+                value={form.name}
+                onChange={(event) => update('name', event.target.value)}
                 className="h-11 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-white/40 focus:ring-white/20"
               />
             </div>
@@ -100,8 +102,8 @@ export default function RegisterPage() {
                 placeholder="you@company.com"
                 autoComplete="email"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={form.email}
+                onChange={(event) => update('email', event.target.value)}
                 className="h-11 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-white/40 focus:ring-white/20"
               />
             </div>
@@ -113,11 +115,16 @@ export default function RegisterPage() {
               <Input
                 id="password"
                 type="password"
+                autoComplete="new-password"
                 required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                minLength={8}
+                value={form.password}
+                onChange={(event) => update('password', event.target.value)}
                 className="h-11 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-white/40 focus:ring-white/20"
               />
+              <p className="text-xs text-white/50">
+                At least 8 characters, including a letter and a number.
+              </p>
             </div>
 
             <button
@@ -126,7 +133,7 @@ export default function RegisterPage() {
               className="btn-gradient w-full h-11 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
             >
               {isLoading ? (
-                "Creating account..."
+                'Creating account...'
               ) : (
                 <>
                   <Sparkles className="h-4 w-4" />
@@ -137,7 +144,7 @@ export default function RegisterPage() {
           </form>
 
           <div className="mt-6 text-center text-sm text-white/50">
-            Already have an account?{" "}
+            Already have an account?{' '}
             <Link
               href="/login"
               className="font-medium text-white/80 underline decoration-white/30 underline-offset-4 hover:text-white hover:decoration-white/60 transition-colors"
@@ -148,5 +155,5 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

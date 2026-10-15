@@ -1,66 +1,102 @@
-"use client"
+/**
+ * Profile page: view and edit the signed-in user's own details.
+ *
+ * Redirects to /login when there is no cached session, then re-reads the
+ * profile from the server so the page always reflects the database rather than
+ * a stale localStorage copy.
+ */
+'use client';
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { authService } from "@/services/auth"
-import type { TeamMember } from "@/lib/types"
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ApiError } from '@/lib/api';
+import { logout, useHasHydrated, useSession } from '@/lib/session';
+import { authService } from '@/lib/api';
+import type { TeamMember } from '@/lib/types';
 
 export default function ProfilePage() {
-  const router = useRouter()
-  const [user, setUser] = useState<TeamMember | null>(null)
-  const [name, setName] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [success, setSuccess] = useState("")
-  const [error, setError] = useState("")
+  const router = useRouter();
+  const currentUser = useSession();
+  const hasHydrated = useHasHydrated();
+  // A primitive id, not the object: a new object identity on every store write
+  // would re-run the fetch below, and the fetch writes back to the store.
+  const userId = currentUser?.id ?? null;
+
+  const [user, setUser] = useState<TeamMember | null>(null);
+  const [name, setName] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [feedback, setFeedback] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const user = await authService.getProfile();
-        setUser(user);
-        setName(user.name);
-      } catch (error) {
-        // Fallback to local storage if API fails or verify token validity
-        const currentUser = authService.getCurrentUser();
-        if (currentUser) {
-          setUser(currentUser);
-          setName(currentUser.name);
-        } else {
-          router.push("/login");
-        }
-      }
-    };
-    
-    fetchProfile();
-  }, [router])
+    // `useSession` reads `null` for one render during hydration, so wait for
+    // hydration before deciding whether this visitor is signed in.
+    if (!hasHydrated) return;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setSuccess("")
-    setError("")
+    if (!userId) {
+      logout();
+      return;
+    }
+
+    let cancelled = false;
+
+    authService
+      .fetchProfile()
+      .then((profile) => {
+        if (cancelled) return;
+        setUser(profile);
+        setName(profile.name);
+      })
+      .catch(() => {
+        // The token may have expired; the API interceptor already logged us out.
+        if (!cancelled) logout();
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hasHydrated, userId]);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setIsSaving(true);
+    setFeedback(null);
 
     try {
-      const updatedUser = await authService.updateProfile({ name })
-      setUser(updatedUser)
-      setSuccess("Profile updated successfully")
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to update profile")
+      const updated = await authService.updateProfile({ name });
+      setUser(updated);
+      setName(updated.name);
+      setFeedback({ kind: 'ok', text: 'Profile updated successfully' });
+    } catch (cause) {
+      setFeedback({
+        kind: 'error',
+        text: cause instanceof ApiError ? cause.message : 'Failed to update profile',
+      });
     } finally {
-      setIsLoading(false)
+      setIsSaving(false);
     }
+  };
+
+  if (isLoading) {
+    return <div className="container mx-auto py-10 max-w-2xl">Loading…</div>;
   }
 
-  const handleLogout = () => {
-    authService.logout()
-  }
-
-  if (!user) return null
+  if (!user) return null;
 
   return (
     <div className="container mx-auto py-10 max-w-2xl">
@@ -69,6 +105,7 @@ export default function ProfilePage() {
           <CardTitle>Profile</CardTitle>
           <CardDescription>Manage your account settings</CardDescription>
         </CardHeader>
+
         <CardContent className="space-y-6">
           <div className="flex flex-col items-center gap-4">
             <Avatar className="h-24 w-24">
@@ -82,50 +119,53 @@ export default function ProfilePage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {success && (
-              <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-sm p-3 rounded-md">
-                {success}
+            {feedback && (
+              <div
+                role="status"
+                className={
+                  feedback.kind === 'ok'
+                    ? 'rounded-md bg-green-100 dark:bg-green-900/30 p-3 text-sm text-green-700 dark:text-green-300'
+                    : 'rounded-md bg-destructive/15 p-3 text-sm text-destructive'
+                }
+              >
+                {feedback.text}
               </div>
             )}
-            {error && (
-              <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
-                {error}
-              </div>
-            )}
-            
+
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input 
-                id="name" 
+              <Label htmlFor="profile-name">Full Name</Label>
+              <Input
+                id="profile-name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(event) => setName(event.target.value)}
+                required
+                maxLength={80}
               />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input 
-                id="email" 
-                value={user.email}
-                disabled
-                className="bg-muted"
-              />
+              <p className="text-xs text-muted-foreground">
+                Your avatar initials are regenerated from this name.
+              </p>
             </div>
 
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Saving..." : "Save Changes"}
+            <div className="space-y-2">
+              <Label htmlFor="profile-email">Email</Label>
+              <Input id="profile-email" value={user.email} disabled className="bg-muted" />
+            </div>
+
+            <Button type="submit" disabled={isSaving}>
+              {isSaving ? 'Saving...' : 'Save Changes'}
             </Button>
           </form>
         </CardContent>
+
         <CardFooter className="justify-between border-t p-6">
-            <Button variant="outline" onClick={() => router.push("/")}>
-                Back to Dashboard
-            </Button>
-            <Button variant="destructive" onClick={handleLogout}>
-                Log out
-            </Button>
+          <Button variant="outline" onClick={() => router.push('/')}>
+            Back to Dashboard
+          </Button>
+          <Button variant="destructive" onClick={logout}>
+            Log out
+          </Button>
         </CardFooter>
       </Card>
     </div>
-  )
+  );
 }
