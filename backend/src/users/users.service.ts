@@ -8,7 +8,7 @@ import bcrypt from 'bcryptjs';
 import { generateToken } from '../shared/auth';
 import { AppError } from '../shared/errors';
 import type { AuthDto, PageDto, UserDto, UserRole } from '../shared/types';
-import { listOptions, paginate } from '../shared/http';
+import { listOptions, paginate, toRawObject } from '../shared/http';
 import { UserModel, type User } from './users.model';
 import type {
   CreateUserBody,
@@ -33,9 +33,7 @@ export const hashPassword = (plain: string): Promise<string> =>
  * here, so a hash can never leak.
  */
 const toDto = (doc: object): UserDto => {
-  const raw = ('toObject' in doc && typeof (doc as { toObject?: () => object }).toObject === 'function'
-    ? (doc as { toObject: () => Record<string, unknown> }).toObject()
-    : doc) as Record<string, unknown>;
+  const raw = toRawObject(doc);
 
   return {
     _id: String(raw._id),
@@ -50,7 +48,7 @@ const toDto = (doc: object): UserDto => {
 };
 
 /** "Alex Johnson" -> "AJ",  "Bob" -> "B",  "" -> "U" */
-const initials = (value: string): string => {
+export const initials = (value: string): string => {
   const parts = value.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return 'U';
   return parts.map((part) => part[0]).join('').slice(0, 2).toUpperCase();

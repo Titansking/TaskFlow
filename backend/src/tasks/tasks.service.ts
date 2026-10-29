@@ -7,7 +7,7 @@ import { ActivityModel } from '../activities/activities.model';
 import { ProjectModel } from '../projects/projects.model';
 import { UserModel } from '../users/users.model';
 import { AppError } from '../shared/errors';
-import { listOptions, paginate } from '../shared/http';
+import { listOptions, paginate, toRawObject } from '../shared/http';
 import {
   TASK_STATUS_LABELS,
   type ActivityType,
@@ -21,9 +21,7 @@ import type { PaginationQuery } from '../users/users.schema';
 
 /** Mongo document -> JSON: ids become strings. */
 const toDto = (doc: object): TaskDto => {
-  const raw = ('toObject' in doc && typeof (doc as { toObject?: () => object }).toObject === 'function'
-    ? (doc as { toObject: () => Record<string, unknown> }).toObject()
-    : doc) as Record<string, unknown>;
+  const raw = toRawObject(doc);
 
   return {
     _id: String(raw._id),
@@ -94,12 +92,6 @@ export const listTasks = async (
 ): Promise<PageDto<TaskDto>> => {
   const page = await paginate<Task>(TaskModel, filter, listOptions(query));
   return { ...page, items: page.items.map((doc) => toDto(doc as object)) };
-};
-
-export const findTaskById = async (id: string): Promise<TaskDto> => {
-  const task = await TaskModel.findById(id).lean().exec();
-  if (!task) throw AppError.notFound('Task not found');
-  return toDto(task);
 };
 
 /* --------------------------------- writes --------------------------------- */

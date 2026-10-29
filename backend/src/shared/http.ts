@@ -11,6 +11,12 @@ import { env } from '../config';
 import { AppError } from './errors';
 import type { PageDto } from './types';
 
+/** Turns a Mongoose document (or plain object) into a plain object. */
+export const toRawObject = (doc: object): Record<string, unknown> =>
+  ('toObject' in doc && typeof (doc as { toObject?: () => object }).toObject === 'function'
+    ? (doc as { toObject: () => Record<string, unknown> }).toObject()
+    : doc) as Record<string, unknown>;
+
 export interface ApiResponse<T = unknown> {
   status: number;
   success: boolean;

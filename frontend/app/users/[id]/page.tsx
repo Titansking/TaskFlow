@@ -17,19 +17,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { userService } from '@/lib/api';
-import type { TeamMember, UserRole, UserStatus } from '@/lib/types';
-
-const ROLE_BADGE: Record<UserRole, string> = {
-  Admin: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
-  'Project Manager': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-  'Team Member': 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
-};
-
-const STATUS_DOT: Record<UserStatus, string> = {
-  online: 'bg-green-500',
-  away: 'bg-yellow-500',
-  offline: 'bg-gray-400',
-};
+import { ROLE_BADGE_CLASSES, STATUS_DOT_CLASSES, type TeamMember } from '@/lib/types';
 
 export default function UserDetailsPage() {
   const router = useRouter();
@@ -90,12 +78,12 @@ export default function UserDetailsPage() {
                 <AvatarFallback className="text-2xl">{user.avatar}</AvatarFallback>
               </Avatar>
               <span
-                className={`absolute bottom-1 right-1 h-5 w-5 rounded-full border-4 border-background ${STATUS_DOT[user.status]}`}
+                className={`absolute bottom-1 right-1 h-5 w-5 rounded-full border-4 border-background ${STATUS_DOT_CLASSES[user.status]}`}
               />
             </div>
             <div className="text-center space-y-2">
               <h2 className="text-2xl font-bold">{user.name}</h2>
-              <Badge className={ROLE_BADGE[user.role]} variant="outline">
+              <Badge className={ROLE_BADGE_CLASSES[user.role]} variant="outline">
                 {user.role}
               </Badge>
             </div>

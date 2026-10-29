@@ -34,7 +34,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ApiError } from '@/lib/api';
-import { USER_ROLES, type MemberDraft, type TeamMember, type UserRole } from '@/lib/types';
+import { ROLE_BADGE_CLASSES, STATUS_DOT_CLASSES, type MemberDraft, type TeamMember, type UserRole, USER_ROLES } from '@/lib/types';
 
 export interface TeamModalProps {
   isOpen: boolean;
@@ -50,18 +50,6 @@ export interface TeamModalProps {
   onMemberRemoved: (id: string) => Promise<void>;
   onOpenMessages: () => void;
 }
-
-const STATUS_DOT: Record<TeamMember['status'], string> = {
-  online: 'bg-green-500',
-  away: 'bg-yellow-500',
-  offline: 'bg-gray-400',
-};
-
-const ROLE_BADGE: Record<UserRole, string> = {
-  Admin: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
-  'Project Manager': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-  'Team Member': 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
-};
 
 /* ------------------------------- invite form ------------------------------ */
 
@@ -255,7 +243,7 @@ export function TeamModal({
                         <AvatarFallback className="text-lg">{member.avatar}</AvatarFallback>
                       </Avatar>
                       <span
-                        className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background ${STATUS_DOT[member.status]}`}
+                        className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background ${STATUS_DOT_CLASSES[member.status]}`}
                       />
                     </div>
                     <div>
@@ -275,7 +263,7 @@ export function TeamModal({
                   </div>
 
                   <div className="flex items-center gap-4">
-                    <Badge className={ROLE_BADGE[member.role]} variant="outline">
+                    <Badge className={ROLE_BADGE_CLASSES[member.role]} variant="outline">
                       {member.role}
                     </Badge>
 

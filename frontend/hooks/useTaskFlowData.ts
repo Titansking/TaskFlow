@@ -27,7 +27,6 @@ import type {
   TaskDraft,
   TeamMember,
   UserRole,
-  UserStatus,
 } from '@/lib/types';
 
 const messageOf = (error: unknown, fallback: string): string =>
@@ -63,7 +62,6 @@ export const useTaskFlowData = () => {
 
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   /* ------------------------------ first load ------------------------------ */
@@ -101,15 +99,13 @@ export const useTaskFlowData = () => {
         if (!(cause instanceof ApiError && cause.status === 401)) {
           setError(messageOf(cause, 'Could not load your workspace'));
         }
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
       });
 
     return () => {
       cancelled = true;
     };
   }, [hasHydrated, userId]);
+
 
   /* ------------------------------- derived -------------------------------- */
 
@@ -233,19 +229,6 @@ export const useTaskFlowData = () => {
     }
   }, []);
 
-  const changeMemberStatus = useCallback(
-    async (id: string, status: UserStatus): Promise<void> => {
-      try {
-        const member = await userService.update(id, { status });
-        setTeamMembers((prev) => prev.map((item) => (item.id === id ? member : item)));
-      } catch (cause) {
-        setError(messageOf(cause, 'Could not update the status'));
-        throw cause;
-      }
-    },
-    [],
-  );
-
   const removeMember = useCallback(async (id: string): Promise<void> => {
     try {
       await userService.remove(id);
@@ -254,19 +237,6 @@ export const useTaskFlowData = () => {
       setError(messageOf(cause, 'Could not remove the team member'));
       throw cause;
     }
-  }, []);
-
-  const refresh = useCallback(async (): Promise<void> => {
-    const [tasksData, projectsData, membersData, activitiesData] = await Promise.all([
-      taskService.list(),
-      projectService.list(),
-      userService.list(),
-      activityService.list(),
-    ]);
-    setTasks(tasksData);
-    setProjects(projectsData);
-    setTeamMembers(membersData);
-    setActivities(activitiesData);
   }, []);
 
   const dismissError = useCallback(() => setError(null), []);
@@ -280,7 +250,6 @@ export const useTaskFlowData = () => {
     currentUser,
     selectedProject,
     searchQuery,
-    isLoading,
     error,
     // derived
     filteredTasks,
@@ -297,9 +266,7 @@ export const useTaskFlowData = () => {
     removeProject,
     addMember,
     changeMemberRole,
-    changeMemberStatus,
     removeMember,
-    refresh,
     dismissError,
   };
 };

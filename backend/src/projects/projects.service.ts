@@ -4,7 +4,7 @@
  */
 import mongoose from 'mongoose';
 import { AppError } from '../shared/errors';
-import { listOptions, paginate } from '../shared/http';
+import { listOptions, paginate, toRawObject } from '../shared/http';
 import type { PageDto, ProjectDto } from '../shared/types';
 import { ActivityModel } from '../activities/activities.model';
 import { TaskModel } from '../tasks/tasks.model';
@@ -14,9 +14,7 @@ import type { PaginationQuery } from '../users/users.schema';
 
 /** Mongo document -> JSON: ids become strings, ObjectIds stay readable. */
 const toDto = (doc: object): ProjectDto => {
-  const raw = ('toObject' in doc && typeof (doc as { toObject?: () => object }).toObject === 'function'
-    ? (doc as { toObject: () => Record<string, unknown> }).toObject()
-    : doc) as Record<string, unknown>;
+  const raw = toRawObject(doc);
 
   return {
     _id: String(raw._id),

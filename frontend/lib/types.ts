@@ -49,6 +49,20 @@ export const PRIORITY_LABELS: Record<TaskPriority, string> = {
   high: 'High',
 };
 
+/** Tailwind classes for role badges, shared by the team modal and user profile pages. */
+export const ROLE_BADGE_CLASSES: Record<UserRole, string> = {
+  Admin: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+  'Project Manager': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+  'Team Member': 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
+};
+
+/** Tailwind classes for status dots, shared by the team modal and user profile pages. */
+export const STATUS_DOT_CLASSES: Record<UserStatus, string> = {
+  online: 'bg-green-500',
+  away: 'bg-yellow-500',
+  offline: 'bg-gray-400',
+};
+
 /** The panels the main area can switch between. */
 export const VIEW_IDS = ['dashboard', 'kanban', 'calendar', 'analytics', 'timeline'] as const;
 export type ViewId = (typeof VIEW_IDS)[number];

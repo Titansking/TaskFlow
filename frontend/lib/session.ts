@@ -128,9 +128,3 @@ export const logout = (): void => {
 
 /** Sends an unauthenticated visitor to /login. */
 export const redirectToLogin = logout;
-
-/** `useSession` plus a setter, for pages that edit the current user. */
-export const useSessionUser = (): [TeamMember | null, (user: TeamMember) => void] => [
-  useSession(),
-  updateStoredUser,
-];

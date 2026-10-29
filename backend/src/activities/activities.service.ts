@@ -2,7 +2,7 @@
  * Activity feed rules. Read-only apart from the manual entries a client may
  * add (comments, member joins).
  */
-import { listOptions, paginate } from '../shared/http';
+import { listOptions, paginate, toRawObject } from '../shared/http';
 import type { ActivityDto, ActivityType, PageDto } from '../shared/types';
 import { ActivityModel, type Activity } from './activities.model';
 import type { CreateActivityBody } from './activities.schema';
@@ -10,9 +10,7 @@ import type { PaginationQuery } from '../users/users.schema';
 
 /** Mongo document -> JSON: ids become strings, an absent taskId stays absent. */
 const toDto = (doc: object): ActivityDto => {
-  const raw = ('toObject' in doc && typeof (doc as { toObject?: () => object }).toObject === 'function'
-    ? (doc as { toObject: () => Record<string, unknown> }).toObject()
-    : doc) as Record<string, unknown>;
+  const raw = toRawObject(doc);
 
   return {
     _id: String(raw._id),

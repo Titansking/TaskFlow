@@ -11,19 +11,9 @@ import { ProjectModel } from './projects/projects.model';
 import { TaskModel } from './tasks/tasks.model';
 import { UserModel } from './users/users.model';
 import type { UserRole, UserStatus } from './shared/types';
-import { hashPassword } from './users/users.service';
+import { hashPassword, initials } from './users/users.service';
 
 const SEED_PASSWORD = process.env.SEED_PASSWORD ?? 'password123';
-
-/** Same initials rule the API uses, so seeded data matches new signups. */
-const initials = (name: string): string =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((part) => part[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
 
 const seed = async (): Promise<void> => {
   await connectDB();
